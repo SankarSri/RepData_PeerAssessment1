@@ -1,20 +1,142 @@
-# Reproducible Research: Peer Assessment 1
+---
+title: "Reproducible Research Project 1 - Activity Analysis"
+date: "Saturday, August 16, 2014"
+output: html_document
+---
+
+##Loading and preprocessing the data
+
+```{r, tidy=FALSE}
+activityData = read.csv("activity.csv",colClasses=c("integer","Date","integer"))
+library(plyr)
+activitySum <- ddply(activityData, .(date),colwise(sum))
+plot(activitySum$date,activitySum$steps,type="h",xlab="Date",ylab="Total # of Steps",main="Total Steps Taken Per Day Histogram")
+
+```
+
+##Mean total number of steps taken per day
+
+```{r}
+activityDailyMean <- ddply(activityData, .(date),colwise(mean),na.rm=T)
+
+activityDailyMean
+
+```
 
 
-## Loading and preprocessing the data
+##Median total number of steps taken per day
+
+```{r}
+
+activityDailyMedian <- ddply(activityData, .(date),colwise(median),na.rm=T)
+
+activityDailyMedian
+
+```
 
 
 
-## What is mean total number of steps taken per day?
+##What is the average daily activity pattern?
+```{r}
+acticiyTimeoftheDayMean <- ddply(activityData, .(interval),colwise(mean),na.rm=T)
+
+acticiyTimeoftheDayMean$interval <- as.POSIXlt(strptime(paste(acticiyTimeoftheDayMean$date,sprintf("%04i",acticiyTimeoftheDayMean$interval),length=4),"%Y-%m-%d%H%M"),tz = "GMT")
+
+plot(acticiyTimeoftheDayMean$interval,acticiyTimeoftheDayMean$steps,t="l",,main="Daily Time of the Day Activity Graph", xlab="Time of the Day", ylab = "Average Steps")
+
+subset(acticiyTimeoftheDayMean,steps == max(acticiyTimeoftheDayMean$steps),select = interval)
+
+```
+
+# The Maximum number of steps are are at interval 8:35 AM
+
+
+#The number of NA data points are shown below
+
+```{r}
+count(activityData[is.na(activityData)])
+
+```
+
+##Imputing missing values
+
+```{r}
+count(activityData[is.na(activityData)])
+
+#Fill NAs with mean of steps for that timeoftheday
+
+acticiyTimeoftheDayMeanForFill <- ddply(activityData, .(interval),colwise(mean),na.rm=T)
+
+missVals <- is.na(activityData$steps)
+
+activityDataFill <- activityData
+
+for (i in 1:nrow(activityData))
+{
+  if (missVals[i])
+  {
+    activityDataFill[i,1] <- subset(acticiyTimeoftheDayMeanForFill,interval == activityData[i,3])$steps
+  }
+}
+
+```
+
+## Mean and median is same, before and after imputing, as imputing is based on mean from non.NA observations
+
+```{r}
+
+is.weekday <- function(x = NULL)
+{
+  if (is.null(x))
+    return(NULL)
+  
+  retVec <- vector(mode = "logical",length = length(x))
+  for (i in 1:length(x))
+  {
+    if (weekdays(x[i]) == "Saturday" | weekdays(x[i]) == "Sunday" )
+    {
+      retVec[i] <- FALSE
+    }
+    else
+    {
+      retVec[i] <- TRUE
+    }
+  }
+  return(retVec)
+}
+
+weekdayVec <- is.weekday(activityDataFill$date)
+
+activityDataFillWeekday <- activityDataFill[weekdayVec,]
+
+activityDataFillWeekend <- activityDataFill[!weekdayVec,]
+
+
+weekdayTimeoftheDayMean <- ddply(activityDataFillWeekday, .(interval),colwise(mean),na.rm=T)
+
+weekdayTimeoftheDayMean$interval <- as.POSIXlt(strptime(paste(weekdayTimeoftheDayMean$date,sprintf("%04i",weekdayTimeoftheDayMean$interval),length=4),"%Y-%m-%d%H%M"),tz = "GMT")
 
 
 
-## What is the average daily activity pattern?
+weekendTimeoftheDayMean <- ddply(activityDataFillWeekend, .(interval),colwise(mean),na.rm=T)
+
+weekendTimeoftheDayMean$interval <- as.POSIXlt(strptime(paste(weekendTimeoftheDayMean$date,sprintf("%04i",weekendTimeoftheDayMean$interval),length=4),"%Y-%m-%d%H%M"),tz = "GMT")
 
 
 
-## Imputing missing values
+par(mfrow=c(2,1))
 
+plot(weekdayTimeoftheDayMean$interval,weekdayTimeoftheDayMean$steps,t="l",main="Weekday Activity Graph", xlab="Time of the Day", ylab = "Average Steps",col="blue")
 
+plot(weekendTimeoftheDayMean$interval,weekendTimeoftheDayMean$steps,t="l",main="Weekend Activity Graph", xlab="Time of the Day", ylab = "Average Steps",col="blue")
 
-## Are there differences in activity patterns between weekdays and weekends?
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
