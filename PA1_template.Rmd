@@ -4,6 +4,7 @@ date: "Saturday, August 16, 2014"
 output: html_document
 ---
 
+
 ##Loading and preprocessing the data
 
 ```{r, tidy=FALSE}
